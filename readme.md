@@ -71,9 +71,24 @@ The infrastructure will follow a three-tier architecture pattern with stateless 
    ![](images/3.png)
    ![](images/6.png)
 
+- Use gdisk utility to create a single partition on each of the 3 disks:
+
 ```bash
+sudo gdisk /dev/xvdbb
+
 # View attached disk
 sudo fdisk -l
+```
+   ![](images/7.png)
+
+- Install lvm2 package: creating logical volumes, which can be resized or moved without needing to unmount file systems.
+
+```bash
+sudo yum install lvm2 -y
+
+#Check for available partitions.
+sudo lvmdiskscan 
+
 
 # Create physical volume
 sudo pvcreate /dev/xvdb
@@ -86,8 +101,12 @@ sudo lvcreate -L 10G -n lv-apps webdata-vg
 sudo lvcreate -L 5G -n lv-logs webdata-vg
 sudo lvcreate -L 5G -n lv-opt  webdata-vg
 
+#Verify that our Logical Volume has been created successfully
+sudo lvs
+
+#Verify the entire setup #view complete setup - VG , PV, and LV
+sudo vgdisplay -v
 ```
-   ![](images/7.png)
    ![](images/8.png)
    ![](images/9.png)
    ![](images/10.png)
@@ -118,6 +137,19 @@ sudo mkdir -p /mnt/apps /mnt/logs /mnt/opt
 sudo mount /dev/webdata-vg/lv-apps /mnt/apps
 sudo mount /dev/webdata-vg/lv-logs /mnt/logs
 sudo mount /dev/webdata-vg/lv-opt /mnt/opt
+```
+
+- Add Mount Points to /etc/fstab and add the following lines:
+```bash
+sudo vi /etc/fstab
+
+#add the following lines
+/dev/webdata-vg/lv-apps /mnt/apps xfs defaults 0 0
+/dev/webdata-vg/lv-logs /mnt/logs xfs defaults 0 0
+/dev/webdata-vg/lv-opt /mnt/opt xfs defaults 0 0
+
+#Verify mounts
+sudo mount -a
 ```
    ![](images/16.png)
 
