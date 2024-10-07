@@ -1,20 +1,19 @@
-Here's a detailed and organized step-by-step markdown guide for the "DevOps Tooling Website Solution" project. I have added more clarity and comprehensive instructions for each step.
-
----
 
 # DevOps Tooling Website Solution
 
-In a previous project, you implemented a WordPress-based solution that can be used as a fully-fledged website or blog. Moving forward, we want to introduce a set of DevOps tools that will help your team in day-to-day activities in managing, developing, testing, deploying, and monitoring different projects.
+In a previous project, we implemented a WordPress-based solution that can be used as a fully-fledged website or blog. Moving forward, we want to introduce a set of DevOps tools that will help your team in day-to-day activities in managing, developing, testing, deploying, and monitoring different projects.
 
-This solution will consist of the following DevOps tools:
 
-1. **Jenkins** - Open source automation server for building CI/CD pipelines.
-2. **Kubernetes** - Container orchestration system for automating computer application deployment, scaling, and management.
-3. **Jfrog Artifactory** - Universal repository manager supporting major packaging formats, build tools, and CI servers.
-4. **Rancher** - Open source software platform for running and managing Docker and Kubernetes in production.
-5. **Grafana** - Multi-platform open-source analytics and interactive visualization web application.
-6. **Prometheus** - Open-source monitoring system with a dimensional data model and flexible query language.
-7. **Kibana** - Free and open user interface that lets you visualize Elasticsearch data and navigate the Elastic Stack.
+## Setup and Technologies Used in this Project
+
+You will implement a tooling website solution that provides easy access to DevOps tools within the corporate infrastructure. The solution will include the following components:
+
+- **Infrastructure**: AWS
+- **Webserver Linux**: Red Hat Enterprise Linux 8
+- **Database Server**: Ubuntu 24.04 + MySQL
+- **Storage Server**: Red Hat Enterprise Linux 8 + NFS Server
+- **Programming Language**: PHP
+- **Code Repository**: GitHub
 
 ---
 
@@ -51,6 +50,8 @@ The infrastructure will follow a three-tier architecture pattern with stateless 
    └─────────────────────────────────────┘
 ```
 
+   ![](images/1.png)
+
 ---
 
 ## Step 1 - Prepare NFS Server
@@ -58,34 +59,52 @@ The infrastructure will follow a three-tier architecture pattern with stateless 
 ### 1. Launch an EC2 Instance
 - Launch a new EC2 instance with **RHEL Linux 8 Operating System**.
 - Choose an instance type based on your requirements (e.g., t2.micro for testing).
+- Ensure you choose an available zone for your subnet because you'll need to create EBS in the same availability zone.
+   ![](images/2.png)
 
 ### 2. Configure LVM
 - Create and attach a new EBS volume to your EC2 instance.
+   ![](images/4.png)
+   ![](images/5.png)
+
 - SSH into your EC2 instance and configure LVM on the server:
+   ![](images/3.png)
+   ![](images/6.png)
 
 ```bash
 # View attached disk
 sudo fdisk -l
 
 # Create physical volume
-sudo pvcreate /dev/xvdf
+sudo pvcreate /dev/xvdb
 
 # Create volume group
-sudo vgcreate vg0 /dev/xvdf
+sudo vgcreate webdata-vg /dev/xvdb1
 
 # Create logical volumes
-sudo lvcreate -L 2G -n lv-apps vg0
-sudo lvcreate -L 2G -n lv-logs vg0
-sudo lvcreate -L 2G -n lv-opt vg0
+sudo lvcreate -L 10G -n lv-apps webdata-vg
+sudo lvcreate -L 5G -n lv-logs webdata-vg
+sudo lvcreate -L 5G -n lv-opt  webdata-vg
+
 ```
+   ![](images/7.png)
+   ![](images/8.png)
+   ![](images/9.png)
+   ![](images/10.png)
+   ![](images/11.png)
+   ![](images/12.png)
+   ![](images/13.png)
+   ![](images/14.png)
+
 
 - Format the logical volumes as `xfs`:
 
 ```bash
-sudo mkfs.xfs /dev/vg0/lv-apps
-sudo mkfs.xfs /dev/vg0/lv-logs
-sudo mkfs.xfs /dev/vg0/lv-opt
+sudo mkfs.xfs /dev/webdata-vg/lv-apps
+sudo mkfs.xfs /dev/webdata-vg/lv-logs
+sudo mkfs.xfs /dev/webdata-vg/lv-opt
 ```
+   ![](images/15.png)
 
 - Create mount points:
 
@@ -96,10 +115,11 @@ sudo mkdir -p /mnt/apps /mnt/logs /mnt/opt
 - Mount the logical volumes:
 
 ```bash
-sudo mount /dev/vg0/lv-apps /mnt/apps
-sudo mount /dev/vg0/lv-logs /mnt/logs
-sudo mount /dev/vg0/lv-opt /mnt/opt
+sudo mount /dev/webdata-vg/lv-apps /mnt/apps
+sudo mount /dev/webdata-vg/lv-logs /mnt/logs
+sudo mount /dev/webdata-vg/lv-opt /mnt/opt
 ```
+   ![](images/16.png)
 
 ### 3. Install NFS Server
 ```bash
@@ -109,6 +129,9 @@ sudo systemctl start nfs-server.service
 sudo systemctl enable nfs-server.service
 sudo systemctl status nfs-server.service
 ```
+   ![](images/17.png)
+   ![](images/18.png)
+   ![](images/19.png)
 
 ### 4. Configure NFS Exports
 - Export the mounts for web servers' subnet CIDR to connect as clients.
@@ -135,9 +158,11 @@ Add the following lines in `/etc/exports` (replace `<Subnet-CIDR>` with your act
 ```bash
 sudo exportfs -arv
 ```
+   ![](images/20.png)
 
 ### 5. Open Ports for NFS
-- Open TCP 111, UDP 111, and UDP 2049 in the Security Groups for NFS Server.
+- Open TCP 111, UDP 111, and UDP 2049 in the Security Groups for NFS Server. (Note you'll only allow access from the Web Server)
+   ![](images/30.png)
 
 ---
 
@@ -145,28 +170,34 @@ sudo exportfs -arv
 
 ### 1. Launch an EC2 Instance
 - Launch a new EC2 instance with **Ubuntu 24.04 Operating System**.
+   ![](images/21.png)
+   ![](images/22.png)
 
 ### 2. Install MySQL Server
 ```bash
-sudo apt update
+sudo apt update -y
 sudo apt install mysql-server -y
 ```
+   ![](images/23.png)
+   ![](images/24.png)
 
 ### 3. Configure MySQL Database
 - Create a new database and user.
 
 ```sql
 CREATE DATABASE tooling;
-CREATE USER 'webaccess'@'%' IDENTIFIED BY 'password';
-GRANT ALL PRIVILEGES ON tooling.* TO 'webaccess'@'%';
+CREATE USER 'webaccess'@'%' IDENTIFIED BY 'mypass';
+GRANT ALL PRIVILEGES ON tooling. * TO 'webaccess'@'%' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
 ```
+   ![](images/25.png)
 
 - Update the `bind-address` in the `/etc/mysql/mysql.conf.d/mysqld.cnf` file to allow remote connections:
 
 ```
 bind-address = 0.0.0.0
 ```
+   ![](images/26.png)
 
 - Restart MySQL:
 
@@ -183,6 +214,8 @@ sudo systemctl restart mysql
 
 ### 1. Launch an EC2 Instances
 - Launch a new EC2 instances with **RHEL 8 Operating System**.
+   ![](images/27.png)
+   ![](images/28.png)
 
 ### 2. Configure NFS Client on the Web Server
 ```bash
@@ -190,12 +223,14 @@ sudo yum install nfs-utils nfs4-acl-tools -y
 sudo mkdir /var/www
 sudo mount -t nfs -o rw,nosuid <NFS-Server-Private-IP-Address>:/mnt/apps /var/www
 ```
+   ![](images/29.png)
 
 - Verify that NFS was mounted successfully:
 
 ```bash
 df -h
 ```
+   ![](images/31.png)
 
 - To persist the mount on reboot:
 
@@ -208,8 +243,11 @@ Add the following line:
 ```
 <NFS-Server-Private-IP-Address>:/mnt/apps /var/www nfs defaults 0 0
 ```
+   ![](images/32.png)
 
-### 3. Install Apache and PHP on Each Web Server
+   ![](images/33.png)
+
+### 3. Install Apache and PHP on the Web Server
 ```bash
 sudo yum install httpd -y
 sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
@@ -221,8 +259,10 @@ sudo systemctl start php-fpm
 sudo systemctl enable php-fpm
 setsebool -P httpd_execmem 1
 ```
-
-- Repeat these steps for the remaining 2 Web Servers.
+   ![](images/34.png)
+   ![](images/35.png)
+   ![](images/36.png)
+   ![](images/37.png)
 
 ### 4. Mount Apache Logs to NFS Server
 ```bash
@@ -235,8 +275,11 @@ sudo mount -t nfs -o rw,nosuid <NFS-Server-Private-IP-Address>:/mnt/logs /var/lo
 - Clone it to each Web Server:
 
 ```bash
+sudo yum install git -y
 git clone https://github.com/<your-username>/tooling.git /var/www/html
 ```
+   ![](images/39.png)
+   ![](images/40.png)
 
 ### 6. Update Website Configuration
 - Modify the database configuration in `/var/www/html/functions.php`:
@@ -244,17 +287,31 @@ git clone https://github.com/<your-username>/tooling.git /var/www/html
 ```php
 $servername = "<Database-Private-IP>";
 $username = "webaccess";
-$password = "password";
+$password = "mypass";
 $dbname = "tooling";
 ```
+   ![](images/41.png)
+   ![](images/42.png)
+
+- Deploy the tooling website's code to the Webserver. Ensure that the html folder from the repository is deployed to /var/www/html
+   ![](images/46.png)
+
+**Note:** If you encounter 403 Error - check permissions to your /var/www/html folder and also disable SELinux `sudo setenforce 0` To make this change permanent - open following config file `sudo vi /etc/sysconfig/selinux and set SELINUX=disabled`, then restrt httpd.
+   ![](images/43.png)
+   ![](images/44.png)
 
 - Apply the `tooling-db.sql` script:
 
 ```bash
 mysql -h <Database-Private-IP> -u webaccess -p tooling < tooling-db.sql
 ```
+   ![](images/50.png)
 
 ### 7. Open Website in Browser
 - Open the website using `http://<Web-Server-Public-IP-Address>/index.php` and ensure you can log in with the credentials you created.
+   ![](images/47.png)
+   ![](images/49.png)
+   ![](images/51.png)
+   ![](images/52.png)
 
 ---
