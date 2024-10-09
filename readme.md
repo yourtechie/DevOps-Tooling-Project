@@ -245,7 +245,7 @@ sudo systemctl restart mysql
 ## Step 3 — Prepare the Web Servers
 
 ### 1. Launch an EC2 Instances
-- Launch a new EC2 instances with **RHEL 8 Operating System**.
+- Launch 3 new EC2 instances with **RHEL 8 Operating System** and do all the following on each of the servers.
    ![](images/27.png)
    ![](images/28.png)
 
@@ -289,8 +289,10 @@ sudo dnf module enable php:remi-7.4
 sudo dnf install php php-opcache php-gd php-curl php-mysqlnd
 sudo systemctl start php-fpm
 sudo systemctl enable php-fpm
-setsebool -P httpd_execmem 1
+sudo setsebool -P httpd_execmem 1
 ```
+Repeat all above steps for another 2 Web Servers.
+
    ![](images/34.png)
    ![](images/35.png)
    ![](images/36.png)
