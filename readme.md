@@ -74,7 +74,7 @@ The infrastructure will follow a three-tier architecture pattern with stateless 
 - Use gdisk utility to create a single partition on each of the 3 disks:
 
 ```bash
-sudo gdisk /dev/xvdbb
+sudo gdisk /dev/xvdb
 
 # View attached disk
 sudo fdisk -l
@@ -193,7 +193,7 @@ sudo exportfs -arv
    ![](images/20.png)
 
 ### 5. Open Ports for NFS
-- Open TCP 111, UDP 111, and UDP 2049 in the Security Groups for NFS Server. (Note you'll only allow access from the Web Server)
+- Open TCP 111, UDP 111, UDP 2049,  and TCP 2049 in the Security Groups for NFS Server. (Note you'll only allow access from the Web Server)
    ![](images/30.png)
 
 ---
