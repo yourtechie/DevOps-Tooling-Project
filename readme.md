@@ -209,6 +209,7 @@ sudo exportfs -arv
 ```bash
 sudo apt update -y
 sudo apt install mysql-server -y
+sudo mysql
 ```
    ![](images/23.png)
    ![](images/24.png)
@@ -227,6 +228,7 @@ FLUSH PRIVILEGES;
 - Update the `bind-address` in the `/etc/mysql/mysql.conf.d/mysqld.cnf` file to allow remote connections:
 
 ```
+sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
 bind-address = 0.0.0.0
 ```
    ![](images/26.png)
