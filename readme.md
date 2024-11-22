@@ -91,7 +91,7 @@ sudo lvmdiskscan
 
 
 # Create physical volume
-sudo pvcreate /dev/xvdb
+sudo pvcreate /dev/xvdb1
 
 # Create volume group
 sudo vgcreate webdata-vg /dev/xvdb1
@@ -178,6 +178,7 @@ sudo vi /etc/exports
 ```
 
 Add the following lines in `/etc/exports` (replace `<Subnet-CIDR>` with your actual CIDR, e.g., `172.31.32.0/20`):
+**Note:** If you have web server in a different subnet you have to include its subnet-CIDR here.
 
 ```
 /mnt/apps <Subnet-CIDR>(rw,sync,no_all_squash,no_root_squash)
@@ -195,7 +196,6 @@ sudo exportfs -arv
 ### 5. Open Ports for NFS
 - Open TCP 111, UDP 111, UDP 2049,  and TCP 2049 in the Security Groups for NFS Server. (Note you'll only allow access from the Web Server)
    ![](images/30.png)
-
 ---
 
 ## Step 2 — Configure the Database Server
